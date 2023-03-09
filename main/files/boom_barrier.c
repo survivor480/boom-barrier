@@ -8,13 +8,14 @@
 
 #include "header/spiffs_create.h"
 
+
 // STOP PIN in this function is defined in the boom_barrier.h function
 // This function is to stop any further action on the barrier
 void stop_function() {
     ESP_LOGW("Boom Barrier", "Stop function called");
-    gpio_set_level(STOP_PIN, 0);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
     gpio_set_level(STOP_PIN, 1);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    gpio_set_level(STOP_PIN, 0);
 }
 
 
@@ -22,9 +23,9 @@ void stop_function() {
 // This function is to trigger the function to move up the barrier
 void up_function(int value){
     ESP_LOGW("Boom Barrier", "Up function Called");
-    gpio_set_level(UP_PIN, 0);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
     gpio_set_level(UP_PIN, 1);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    gpio_set_level(UP_PIN, 0);
     vTaskDelay((value-100) / portTICK_PERIOD_MS);
     stop_function();
 }
@@ -34,9 +35,9 @@ void up_function(int value){
 // This function is to trigger the function to move down the barrier
 void down_function(int value) {
     ESP_LOGW("Boom Barrier", "Down function called");
-    gpio_set_level(DOWN_PIN, 0);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
     gpio_set_level(DOWN_PIN, 1);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    gpio_set_level(DOWN_PIN, 0);
     vTaskDelay((value-100) / portTICK_PERIOD_MS);
     stop_function();
 }

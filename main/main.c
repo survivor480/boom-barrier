@@ -11,7 +11,13 @@
 
 
 void app_main(void){
+    gpio_set_direction(GPIO_NUM_21, GPIO_MODE_OUTPUT);
+    gpio_set_direction(GPIO_NUM_18, GPIO_MODE_OUTPUT);
+    gpio_set_direction(GPIO_NUM_19, GPIO_MODE_OUTPUT);
     spiffs_start();
+
+    up_function(read_time());
+
 
     // wifi_init_sta();
     ethernet_task_start();

@@ -24,6 +24,10 @@ void slice(const char *str, char *result, size_t start, size_t end){
 	strncpy(result, str + start, strlen(str)-start+end);
 }
 
+int status = 1;
+
+int running = 0;
+
 
 /* Handler to redirect incoming GET request for /index.html to /
  * This can be overridden by uploading file with same name */
@@ -94,14 +98,21 @@ static esp_err_t close_barrier_post_handler(httpd_req_t *req){
 
     ESP_LOGI(HTTP_TAG, "Close barrier handler called");
 
-    sprintf(return_response, "{\"status\": \"success\", \"message\": \"Boom barrier closing.\"}");
 
-    httpd_resp_set_type(req, "application/json");
-	httpd_resp_send(req, return_response, strlen(return_response));
+    if(status == 0){
+        sprintf(return_response, "{\"status\": \"failed\", \"message\": \"Barrier already closed.\"}");
 
-    ESP_LOGW(HTTP_TAG, "The value read is: %d", read_time());
-    down_function(read_time());
-    stop_function();
+        httpd_resp_set_type(req, "application/json");
+	    httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, return_response);
+    } else if(status == 1){
+        status = 0;
+        down_function(read_time());
+        sprintf(return_response, "{\"status\": \"success\", \"message\": \"Barrier is closing.\"}");
+
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, return_response, strlen(return_response));
+    }
+
     return ESP_OK;
 }
 
@@ -110,15 +121,38 @@ static esp_err_t open_barrier_post_handler(httpd_req_t *req) {
 
     ESP_LOGI(HTTP_TAG, "Open barrier handler called");
 
-    sprintf(return_response, "{\"status\": \"success\", \"message\": \"Boom barrier opening.\"}");
+    if(status == 1){
+        sprintf(return_response, "{\"status\": \"failed\", \"message\": \"Barrier already open.\"}");
+        
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, return_response);
+    } else if(status == 0){
+        status = 1;
+        up_function(read_time());
+        sprintf(return_response, "{\"status\": \"success\", \"message\": \"Barrier is opening.\"}");
 
-    httpd_resp_set_type(req, "application/json");
-	httpd_resp_send(req, return_response, strlen(return_response));
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, return_response, strlen(return_response));
+    }
 
-    ESP_LOGW(HTTP_TAG, "The value read is: %d", read_time());
-    up_function(read_time());
-    stop_function();
+    return ESP_OK;
+}
 
+static esp_err_t bin_file_handler(httpd_req_t *req){
+    extern const unsigned char bin_file_start[]   asm("_binary_bin_file_png_start");
+    extern const unsigned char bin_file_end[]     asm("_binary_bin_file_png_end");
+    const size_t bin_file_size = bin_file_end - bin_file_start;
+    httpd_resp_set_type(req, "text/html");
+    httpd_resp_send(req, (const char*)bin_file_start, bin_file_size);
+    return ESP_OK;
+}
+
+static esp_err_t file_icon_handler(httpd_req_t *req){
+    extern const unsigned char file_icon_start[]   asm("_binary_file_icon_png_start");
+    extern const unsigned char file_icon_end[]     asm("_binary_file_icon_png_end");
+    const size_t file_icon_size = file_icon_end - file_icon_start;
+    httpd_resp_set_type(req, "text/html");
+    httpd_resp_send(req, (const char*)file_icon_start, file_icon_size);
     return ESP_OK;
 }
 
@@ -253,7 +287,7 @@ void http_server_start(){
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
     config.uri_match_fn = httpd_uri_match_wildcard;
-    config.max_uri_handlers = 12;
+    config.max_uri_handlers = 15;
 
     ESP_LOGI(HTTP_TAG, "starting HTTP Server on port: '%d'", config.server_port);
     if(httpd_start(&server, &config) != ESP_OK){
@@ -359,6 +393,24 @@ void http_server_start(){
     };
 
     httpd_register_uri_handler(server, &ota_update);
+
+    httpd_uri_t file_icon_update = {
+        .uri        = "/file-icon.png",
+        .method     = HTTP_GET,
+        .handler    = file_icon_handler,
+        .user_ctx   = NULL
+    };
+
+    httpd_register_uri_handler(server, &file_icon_update);
+
+    httpd_uri_t bin_file_update = {
+        .uri        = "/bin-file.png",
+        .method     = HTTP_GET,
+        .handler    = bin_file_handler,
+        .user_ctx   = NULL
+    };
+
+    httpd_register_uri_handler(server, &bin_file_update);
 }
 
 

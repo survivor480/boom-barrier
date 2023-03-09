@@ -1,18 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>File Upload</title>
+	<title>OTA File Upload</title>
     <link rel="stylesheet" href="/main.css">
     <link rel="icon" href="/images.png">
     <script src="/index_html.js" defer></script>
 </head>
 <body>
-	<h1>OTA File Upload</h1>
-    <div id="container">
-        <div id="drop-zone">
-            Drag and drop your file here or click to select a file.
-            <input type="file" id="dropzone-input" accept=".bin"/>
+	<h1>File Upload</h1>
+    <div id="drop-zone">
+        <input type="file" id="dropzone-input" accept=".bin"/>
+        <div id="image-div">
+            <img id="image" src="file-icon.png">
         </div>
-        <button type="submit" id="firmware_update">Update Firmware</button>
+        <div>
+            <p id="fileName">Drag and drop your file here or click to select a file.</p>
+        </div>
+    </div>
+    <div id="file-preview">
+        <h3 id="error-show"></h3>
+    </div>
+    <div id="ota-update">
+        <h3 id="ota_update"></h3>
+    </div>
+    <div id="upload-button-div">
+        <button id="upload-button">Upload Firmware</button>
+    </div>
+    <div id="file-upload-status-show">
+        <h3 id="file-upload"></h3>
     </div>
 </body>
